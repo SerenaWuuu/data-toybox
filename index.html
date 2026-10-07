@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Toybox, tiny tools for CSVs and SQL</title>
+<meta name="description" content="Data Toybox: a CSV playground, a SQL beautifier, and a plain-English to SQL helper. Small, sharp, and free.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <span class="hero-emoji" id="heroEmoji" title="psst, click me a few times">🧸</span>
+    <div><span class="hero-badge">the data lab toy shelf</span></div>
+    <h1>Data <span class="toy">Toybox</span></h1>
+    <p class="sub">Three tiny tools for people who live in spreadsheets and queries. Drop in a messy CSV, polish a gnarly query, or turn plain English into SQL. No signups, no servers, your data never leaves this page.</p>
+  </header>
+
+  <nav class="tabs" aria-label="Tools">
+    <button class="tab-btn active" data-tab="csv">📊 CSV Playground</button>
+    <button class="tab-btn" data-tab="sql">✨ SQL Shine</button>
+    <button class="tab-btn" data-tab="nl">🗣️ NL to SQL</button>
+  </nav>
+
+  <!-- ============ CSV PLAYGROUND ============ -->
+  <section class="tool-panel active" id="panel-csv">
+    <div class="card">
+      <h2>CSV Playground</h2>
+      <p class="hint">Throw a CSV at it and get instant charts. Great for a first look before you open the big guns.</p>
+
+      <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload a CSV file">
+        <span class="big">📥</span>
+        <div><strong>Drop a CSV here</strong> or <u>browse your files</u></div>
+        <div style="font-size:13px; margin-top:6px;">or <button class="linklike" id="sampleBtn" type="button">play with sample data</button> if your files are shy</div>
+        <input type="file" id="fileInput" accept=".csv,text/csv">
+      </div>
+
+      <div id="csvLoading" class="state loading hidden" style="margin-top:14px;">
+        <span class="big">🔍</span> Sniffing your data, one row at a time...
+      </div>
+
+      <div id="csvError" class="state error hidden" style="margin-top:14px;"></div>
+
+      <div id="csvResults" class="hidden">
+        <div class="card" style="box-shadow:none; padding:16px; margin-top:14px;">
+          <h2 style="font-size:16px;">First peek</h2>
+          <div class="table-scroll"><table class="preview" id="previewTable"></table></div>
+          <p class="meta-line" id="csvMeta"></p>
+        </div>
+
+        <div class="card" style="box-shadow:none; padding:16px;">
+          <h2 style="font-size:16px;">Pick a chart</h2>
+          <p class="hint" id="chartSuggest">Tap a style below. The starred one is my best guess for your data.</p>
+          <div class="chip-row" id="chartChips">
+            <button class="chip" data-chart="bar">📊 Bar</button>
+            <button class="chip" data-chart="line">📈 Line</button>
+            <button class="chip" data-chart="pie">🥧 Pie</button>
+            <button class="chip" data-chart="scatter">✨ Scatter</button>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="xSelect">Category / X axis</label>
+              <select id="xSelect"></select>
+            </div>
+            <div class="field">
+              <label for="ySelect">Value / Y axis</label>
+              <select id="ySelect"></select>
+            </div>
+          </div>
+          <div id="chartBox"></div>
+          <div class="btn-row">
+            <button class="btn ghost small" id="pngBtn">⬇ Download PNG</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="csvEmpty" class="state" style="margin-top:14px;">
+        <span class="big">🫧</span>
+        Nothing here yet. Your CSV will appear like magic once you drop it above.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SQL SHINE ============ -->
+  <section class="tool-panel" id="panel-sql">
+    <div class="card">
+      <h2>SQL Shine</h2>
+      <p class="hint">Paste a query that looks like it was written during a fire drill. Get back something you would show your manager.</p>
+      <div class="field" style="max-width:320px;">
+        <label for="dialectSelect">Dialect</label>
+        <select id="dialectSelect">
+          <option value="bigquery" selected>BigQuery (GoogleSQL)</option>
+          <option value="tsql">T-SQL (SQL Server / Azure)</option>
+          <option value="sql">Standard SQL</option>
+          <option value="postgresql">PostgreSQL</option>
+          <option value="mysql">MySQL</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="sqlInput">Your SQL</label>
+        <textarea class="sql-input" id="sqlInput" rows="9" spellcheck="false" placeholder="select id,name from users where signup_date > '2026-01-01' order by 1"></textarea>
+      </div>
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn" id="formatBtn">✨ Make it shine</button>
+        <button class="btn ghost" id="sqlCopyBtn">📋 Copy</button>
+        <button class="btn ghost" id="sqlClearBtn">🧹 Clear</button>
+      </div>
+      <p class="stat-line" id="sqlStats">0 characters, 0 lines. A blank canvas.</p>
+      <div id="sqlError" class="state error hidden" style="margin-top:12px;"></div>
+    </div>
+  </section>
+
+  <!-- ============ NL TO SQL ============ -->
+  <section class="tool-panel" id="panel-nl">
+    <div class="card">
+      <h2>NL to SQL</h2>
+      <p class="hint">Fill in the blanks like you are ordering coffee. Watch a real SELECT statement assemble itself below.</p>
+
+      <div class="field">
+        <label for="nlTable">Table name</label>
+        <input type="text" id="nlTable" placeholder="orders" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="nlCols">Columns, comma separated (or * for everything)</label>
+        <input type="text" id="nlCols" placeholder="customer_id, order_total, order_date" autocomplete="off" spellcheck="false">
+      </div>
+
+      <div class="field">
+        <label>Filters <span style="font-weight:400; color:var(--ink-soft);">(WHERE, optional)</span></label>
+        <div id="filterList"></div>
+        <button class="btn ghost small" id="addFilterBtn" type="button">＋ Add a filter</button>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="nlAgg">Aggregate</label>
+          <select id="nlAgg">
+            <option value="">No aggregation</option>
+            <option value="COUNT">COUNT</option>
+            <option value="SUM">SUM</option>
+            <option value="AVG">AVG</option>
+            <option value="MIN">MIN</option>
+            <option value="MAX">MAX</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="nlAggCol">Aggregate column</label>
+          <input type="text" id="nlAggCol" placeholder="order_total" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="nlGroup">Group by <span style="font-weight:400; color:var(--ink-soft);">(optional)</span></label>
+          <input type="text" id="nlGroup" placeholder="customer_id" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="nlLimit">Limit rows <span style="font-weight:400; color:var(--ink-soft);">(optional)</span></label>
+          <input type="text" id="nlLimit" placeholder="100" inputmode="numeric" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="nlOrderCol">Order by <span style="font-weight:400; color:var(--ink-soft);">(optional)</span></label>
+          <input type="text" id="nlOrderCol" placeholder="order_date" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="nlOrderDir">Direction</label>
+          <select id="nlOrderDir">
+            <option value="DESC">Newest / biggest first (DESC)</option>
+            <option value="ASC">Oldest / smallest first (ASC)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="nlOut">Your query, fresh out of the oven</label>
+        <div class="sql-output-wrap">
+          <textarea class="sql-input" id="nlOut" rows="7" readonly spellcheck="false"></textarea>
+          <div class="btn-row">
+            <button class="btn" id="nlCopyBtn">📋 Copy query</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div>Built with curiosity in the data lab. Open source under MIT, grab it, fork it, make it yours.</div>
+    <div style="margin-top:8px;"><a href="https://github.com/SerenaWuuu/data-toybox">github.com/SerenaWuuu/data-toybox</a></div>
+    <div class="siblings">More from the lab:
+      <span>🐾 Paws Friend Lab</span><span>🔭 Star Gazer</span><span>☁️ Cloud Toolkit</span><span>🐈 Cat Care Log</span>
+    </div>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sql-formatter@15.9.0/dist/sql-formatter.min.js"></script>
+<script src="js/app.js"></script>
+<script src="js/csv-playground.js"></script>
+<script src="js/sql-shine.js"></script>
+<script src="js/nl-sql.js"></script>
+</body>
+</html>
